@@ -57,6 +57,7 @@ contract MyGovernorTest is Test {
 
     function testGovernanceUpdatesBox() public {
         //one big test to check how governance updates box
+        console.log("Old Box value: ", box.getNumber());
         uint256 newNumberToStore = 777;
         string memory description = "store 1 to Box";
         bytes memory encodedFunctionCall = abi.encodeWithSignature("store(uint256)", newNumberToStore);
@@ -95,5 +96,9 @@ contract MyGovernorTest is Test {
         vm.roll(block.number + MIN_DELAY + 1);
 
         //4. Execute tx
+        governor.execute(targets, values, callDatas, descriptionHash);
+
+        assert(box.getNumber() == newNumberToStore);
+        console.log("Box value: ", box.getNumber());
     }
 }
