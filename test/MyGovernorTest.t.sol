@@ -16,6 +16,11 @@ contract MyGovernorTest is Test {
     address public USER = makeAddr("user");
     uint256 public constant INITIAL_SUPPLY = 100 ether;
 
+    uint256 public constant MIN_DELAY = 3600;
+
+    address[] proposers;
+    address[] executors;
+
     function setUp() public {
         // Set up the governor contract
         govToken = new GovToken();
@@ -23,6 +28,24 @@ contract MyGovernorTest is Test {
 
         vm.startPrank(USER);
         govToken.delegate(USER);
+        timeLock = new TimeLock(MIN_DELAY, proposers, executors);
+        governor = new MyGovernor(govToken, timeLock);
+
+        bytes32 proposerRole = timeLock.PROPOSER_ROLE();
+        bytes32 executorRole = timeLock.EXECUTOR_ROLE();
+        bytes32 adminRole = timeLock.TIMELOCK_ADMIN_ROLE();
+
+        timeLock.grantRole(proposerRole, address(governor));
+        timeLock.grantRole(executorRole, address(0));
+        timeLock.revokeRole(adminRole, USER);
         vm.stopPrank();
+
+        box = new Box();
+        box.transferOwnership(address(timeLock));
+    }
+
+    function testCantUpdateBoxWithoutGovernance() public {
+        vm.expectRevert();
+        box.store(1);
     }
 }
